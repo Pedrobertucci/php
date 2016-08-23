@@ -1,0 +1,76 @@
+class conta extends CI_Controller {
+
+	
+	public function entrar(){
+
+		$alerta = null; 
+
+		if($this->input->post('entrar') == "entrar")
+		{
+			
+			if($this->input->post('captcha')) redirect('conta/entrar');
+
+			//define aas regras de validação
+			$this->form_validation->set_rules('email', 'EMAIL', 'required|valid_email');
+			$this->form_validation->set_rules('senha', 'SENHA', 'required|min_length[6]|max_length[20]');
+
+			//executa regras de validacao
+			if($this->form_validation->run() == TRUE)
+			{	
+
+
+				//carrega o model usuarios_model
+				$this->load->model('usuarios_model');
+
+				//armazena os dados do formulario
+				$email = $this->input->post('email'); 
+				$senha = $this->input->post('senha');
+
+				//executa metodo check_login do model
+				$login_existe = $this->usuarios_model->check_login($email, $senha);
+
+				//verifica se os dados digitados estao crretos
+				if($login_existe)
+				{		
+
+						//login autorizado.. inicia a sessao
+						$usuario = $login_existe;
+						//iniciar a sessao e redirecionar un lugar restrito
+						
+						$session = array(
+						        'usuario'	    => $usuario['usuario'],
+						        'created' 		=> $usuario['created'],
+						        'logado' 		=> TRUE
+						);
+
+					
+						//incializa a sessão 
+					
+						$this->session->set_userdata($session);
+						
+						redirect('welcome/index');
+						
+
+				}else{
+					//login invalido
+					$alerta = array(
+						"class"		 => "danger",
+						"mensagem"	 => "Atenção! Login invalido, usuario ou senha incorretos. <br>"
+					);
+				}
+			}else
+			{
+					$alerta = array(
+						"class"		 => "danger",
+						"mensagem"	 => "Atenção falha na validação do formulario <br>".validation_errors()
+					);
+			}
+		}
+		
+		$dados = array(
+			"alerta" => $alerta
+			);
+
+		$this->load->view('conta/entrar', $dados);
+
+	}
